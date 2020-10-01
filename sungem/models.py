@@ -5,6 +5,10 @@ from django.contrib.auth import models as authmodels
 # Create your models here.
 
 class Module(models.Model):
+    """
+    Model for a single module. Maybe most information can be removed later since the data and similarity can be
+    preprocessed without knowledge of Module attributes.
+    """
     name = models.CharField(max_length=100)
     nr = models.CharField(max_length=20)
     cp = models.SmallIntegerField()
@@ -20,6 +24,10 @@ class Module(models.Model):
 
 
 class Vote(models.Model):
+    """
+    Model for votes. Incorporates many-to-many relationship between Users and Modules. Score is kept as an integer
+    which may be changed in favor of a continuous float value.
+    """
     user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
     score = models.SmallIntegerField()
