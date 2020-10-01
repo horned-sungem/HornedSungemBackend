@@ -16,6 +16,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+# for login
+from rest_framework.authtoken import views as authviews
+
+from sungem import views
+from django.conf.urls import url
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/sungem/', views.get_recommended_modules),
+    path('api/login/', authviews.obtain_auth_token),
+    path('api/logout/', views.logout_user),
+    path('api/register/', views.register_user),
+    path('api/echo/', views.echo)
 ]
