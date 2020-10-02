@@ -8,12 +8,26 @@ from rest_framework import status
 from django import http
 
 import json
+import numpy as np
 
 from rest_framework.authtoken import views as authviews
 from django.contrib.auth import models as authmodels
 
+from .models import Vote
+
+MAXIMUM_RECOMMENDED_MODULES = 5
+MINIMUM_ABSOLUTE_SIMILARITY = 0
 
 # Create your views here.
+
+f = open('sungem/output.json')
+module_data = json.load(f)
+f.close()
+similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
+
+# Create dict with subset of attributes for faster recommendation
+relevant_attr = ['Angebotsturnus', 'Kreditpunkte', 'Modul Nr.', 'Moduldauer', 'Modulname', 'Sprache']
+reduced_data = [dict(zip(relevant_attr, [d[att] for att in relevant_attr])) for d in module_data]
 
 
 @api_view(['GET'])
@@ -21,9 +35,6 @@ def get_modules(request):
     """
     Returns compressed modules as json.
     """
-    f = open('sungem/output.json')
-    data = json.load(f)
-    f.close()
     return http.JsonResponse(data, safe=False)
 
 
@@ -31,6 +42,7 @@ def get_modules(request):
 def register_user(request):
     """
     Registers a user if they don't exist yet. Does NOT log the user in.
+    Requires "username" and "password" attributes.
     """
     data = request.data
     if 'username' not in data or 'password' not in data:
@@ -58,7 +70,7 @@ def logout_user(request):
 @permission_classes([IsAuthenticated])
 def echo(request):
     """
-    Test Endpoint
+    Authentication Test Endpoint
     """
     return response.Response(request.user.username)
 
@@ -70,8 +82,43 @@ def get_recommended_modules(request):
     """
     Returns Modules specifically recommended to certain user
     """
-    return response.Response(request.body['username'])
-    # if request.user.is_authenticated:
-    #    return Response("Hello There.")
-    # else:
-    #    return Response("General Kenobi.")
+
+    # TODO: replace with actual user data
+    # votes = {122: 5, 140: 5, 15: 5, 6: -5, 11: -5, 10: -1, 3: 3}
+
+    votes = {vote.module: vote.score for vote in Vote.objects.filter(user=request.user)}
+
+    # use only content based filtering to return recommended modules.
+    # TODO: include community based filtering
+    recommended = sorted(enumerate(reduced_data),
+                         key=lambda e: sum(similarity[e[0], module] * score for module, score in votes.items()),
+                         reverse=True)
+
+    recommended = [r for r in recommended
+                   if r[0] not in votes
+                   and sum(similarity[r[0], module] * score
+                           for module, score in votes.items()) > MINIMUM_ABSOLUTE_SIMILARITY]
+
+    return response.Response(recommended[:MAXIMUM_RECOMMENDED_MODULES])
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def vote(request):
+    """
+    "Requires logged-in user, "module" and "score" attribute
+    """
+
+    if 'score' not in request.data or 'module' not in request.data:
+        return http.HttpResponseBadRequest('Request needs to have score and module attribute.')
+
+    if request.data['score'] != '0':
+        Vote.objects.update_or_create(
+            user=request.user, module=request.data['module'],
+            defaults={'score': request.data['score']}
+        )
+    else:
+        Vote.objects.filter(user=request.user).filter(module=request.data['module']).delete()
+
+    return response.Response()

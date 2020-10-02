@@ -9,6 +9,7 @@ class Module(models.Model):
     Model for a single module. Maybe most information can be removed later since the data and similarity can be
     preprocessed without knowledge of Module attributes.
     """
+
     name = models.CharField(max_length=100)
     nr = models.CharField(max_length=20)
     cp = models.SmallIntegerField()
@@ -29,10 +30,14 @@ class Vote(models.Model):
     which may be changed in favor of a continuous float value.
     """
     user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
-    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    # module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    module = models.SmallIntegerField()
     score = models.SmallIntegerField()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'module'], name='unique_vote')
         ]
+
+    def __str__(self):
+        return self.user.username + ' voted on ' + str(self.module) + ': ' + str(self.score)

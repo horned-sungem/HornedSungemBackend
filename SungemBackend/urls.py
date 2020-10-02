@@ -25,8 +25,10 @@ from django.conf.urls import url
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/sungem/', views.get_recommended_modules),
+    path('api/modules/', views.get_modules),
     path('api/login/', authviews.obtain_auth_token),
     path('api/logout/', views.logout_user),
     path('api/register/', views.register_user),
-    path('api/echo/', views.echo)
+    path('api/echo/', views.echo),
+    path('api/vote/', views.vote)
 ]
