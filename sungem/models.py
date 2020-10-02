@@ -8,7 +8,7 @@ import json
 f = open('sungem/output.json')
 module_data = json.load(f)
 f.close()
-
+module_nr_map = {module['Modul Nr.']: (module, index) for index, module in enumerate(module_data)}
 
 # Create your models here.
 
@@ -39,7 +39,7 @@ class Vote(models.Model):
     """
     user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     # module = models.ForeignKey(Module, on_delete=models.CASCADE)
-    module = models.SmallIntegerField()
+    module = models.CharField(max_length=20)
     score = models.SmallIntegerField()
 
     class Meta:
@@ -48,4 +48,5 @@ class Vote(models.Model):
         ]
 
     def __str__(self):
-        return self.user.username + ' voted on ' + module_data[self.module]['Modulname'] + ': ' + str(self.score)
+        return self.user.username + ' voted on ' + self.module + ': ' + str(self.score) + ' (' \
+               + module_nr_map[self.module][0]['Modulname'] + ')'

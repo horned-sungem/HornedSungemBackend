@@ -30,7 +30,7 @@ similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 relevant_attr = ['Angebotsturnus', 'Kreditpunkte', 'Modul Nr.', 'Moduldauer', 'Modulname', 'Sprache']
 reduced_data = [dict(zip(relevant_attr, [d[att] for att in relevant_attr])) for d in module_data]
 
-module_nr_map = {module['Modul Nr.']: module for module in module_data}
+module_nr_map = {module['Modul Nr.']: (module, index) for index, module in enumerate(module_data)}
 
 
 @api_view(['GET'])
@@ -46,7 +46,7 @@ def get_module(request, name=''):
     """
     Returns module as json.
     """
-    return http.JsonResponse(module_nr_map[name], safe=False)
+    return http.JsonResponse(module_nr_map[name][0], safe=False)
 
 
 @api_view(['POST'])
@@ -97,7 +97,7 @@ def get_recommended_modules(request):
     # TODO: replace with actual user data
     # votes = {122: 5, 140: 5, 15: 5, 6: -5, 11: -5, 10: -1, 3: 3}
 
-    votes = {vote.module: vote.score for vote in Vote.objects.filter(user=request.user)}
+    votes = {module_nr_map[vote.module][1]: vote.score for vote in Vote.objects.filter(user=request.user)}
 
     # use only content based filtering to return recommended modules.
     # TODO: include community based filtering
