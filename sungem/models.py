@@ -1,6 +1,14 @@
 from django.db import models
 from django.contrib.auth import models as authmodels
 
+import json
+
+# TODO: Adjust for new module_data
+# Only used for better representation in /admin
+f = open('sungem/output.json')
+module_data = json.load(f)
+f.close()
+
 
 # Create your models here.
 
@@ -40,4 +48,4 @@ class Vote(models.Model):
         ]
 
     def __str__(self):
-        return self.user.username + ' voted on ' + str(self.module) + ': ' + str(self.score)
+        return self.user.username + ' voted on ' + module_data[self.module]['Modulname'] + ': ' + str(self.score)

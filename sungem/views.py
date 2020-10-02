@@ -20,6 +20,7 @@ MINIMUM_ABSOLUTE_SIMILARITY = 0
 
 # Create your views here.
 
+# TODO: Adjust for new module_data
 f = open('sungem/output.json')
 module_data = json.load(f)
 f.close()
@@ -29,6 +30,8 @@ similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 relevant_attr = ['Angebotsturnus', 'Kreditpunkte', 'Modul Nr.', 'Moduldauer', 'Modulname', 'Sprache']
 reduced_data = [dict(zip(relevant_attr, [d[att] for att in relevant_attr])) for d in module_data]
 
+module_nr_map = {module['Modul Nr.']: module for module in module_data}
+
 
 @api_view(['GET'])
 def get_modules(request):
@@ -36,6 +39,14 @@ def get_modules(request):
     Returns compressed modules as json.
     """
     return http.JsonResponse(module_data, safe=False)
+
+
+@api_view(['GET'])
+def get_module(request, name=''):
+    """
+    Returns module as json.
+    """
+    return http.JsonResponse(module_nr_map[name], safe=False)
 
 
 @api_view(['POST'])
@@ -72,7 +83,7 @@ def echo(request):
     """
     Authentication Test Endpoint
     """
-    return response.Response(request.user.username)
+    return response.Response('user ' + request.user.username + ' is authenticated.')
 
 
 @api_view(['GET'])
