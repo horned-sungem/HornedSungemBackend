@@ -15,8 +15,7 @@ from django.contrib.auth import models as authmodels
 
 from .models import Vote
 
-MAXIMUM_RECOMMENDED_MODULES = 5
-MINIMUM_ABSOLUTE_SIMILARITY = 0
+from .recommender import *
 
 # Create your views here.
 
@@ -38,7 +37,7 @@ def get_modules(request):
     """
     Returns compressed modules as json.
     """
-    return http.JsonResponse(module_data, safe=False)
+    return http.JsonResponse(reduced_data, safe=False)
 
 
 @api_view(['GET'])
@@ -46,7 +45,7 @@ def get_module(request, name=''):
     """
     Returns module as json.
     """
-    return http.JsonResponse(module_nr_map[name][0], safe=False)
+    return http.JsonResponse(module_nr_map[name.replace('_', '/')][0], safe=False)
 
 
 @api_view(['POST'])
@@ -90,27 +89,9 @@ def echo(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_recommended_modules(request):
-    """
-    Returns Modules specifically recommended to certain user
-    """
+    recommended_ids = recommend_modules(request.user)
 
-    # TODO: replace with actual user data
-    # votes = {122: 5, 140: 5, 15: 5, 6: -5, 11: -5, 10: -1, 3: 3}
-
-    votes = {module_nr_map[vote.module][1]: vote.score for vote in Vote.objects.filter(user=request.user)}
-
-    # use only content based filtering to return recommended modules.
-    # TODO: include community based filtering
-    recommended = sorted(enumerate(reduced_data),
-                         key=lambda e: sum(similarity[e[0], module] * score for module, score in votes.items()),
-                         reverse=True)
-
-    recommended = [r for r in recommended
-                   if r[0] not in votes
-                   and sum(similarity[r[0], module] * score
-                           for module, score in votes.items()) > MINIMUM_ABSOLUTE_SIMILARITY]
-
-    return response.Response(recommended[:MAXIMUM_RECOMMENDED_MODULES])
+    return response.Response([reduced_data[index] for index in recommended_ids])
 
 
 @api_view(['POST'])
@@ -132,4 +113,10 @@ def vote(request):
     else:
         Vote.objects.filter(user=request.user).filter(module=request.data['module']).delete()
 
+    return response.Response()
+
+
+@api_view(['POST'])
+def update(request):
+    update_model()
     return response.Response()

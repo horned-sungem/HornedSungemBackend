@@ -15,6 +15,6 @@ urlpatterns = [
     path('login/', authviews.obtain_auth_token),
     path('logout/', views.logout_user),
 
-    path('echo/', views.echo)
-
+    path('echo/', views.echo),
+    path('update/', views.update)
 ]
