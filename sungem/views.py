@@ -105,6 +105,9 @@ def vote(request):
     if 'score' not in request.data or 'module' not in request.data:
         return http.HttpResponseBadRequest('Request needs to have score and module attribute.')
 
+    if request.data['module'] not in module_nr_map:
+        return http.HttpResponseBadRequest('Invalid module id: '+request.data['module']+".")
+
     if request.data['score'] != '0':
         Vote.objects.update_or_create(
             user=request.user, module=request.data['module'],
