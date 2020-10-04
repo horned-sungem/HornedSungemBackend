@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated
 
 from sungem.models import Vote
-from sungem.recommender import recommend_modules
+from sungem.recommender import recommend_modules, update_model
 from sungem.serializers import VoteSerializer
 
 # Create your views here.
@@ -111,6 +111,8 @@ def vote(request):
     else:
         Vote.objects.filter(user=request.user).filter(module=request.data['module']).delete()
 
+    update_model()  # TODO: consider removing this in favor of a more static and less computationally expensive approach
+
     return response.Response()
 
 
@@ -118,6 +120,9 @@ def vote(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_votes(request):
+
+    # TODO: expand module response and remove user attribute from response since it is redundant und unnecessary
+    
     user_votes = Vote.objects.filter(user=request.user)
     return response.Response([VoteSerializer(vote).data for vote in user_votes])
 
