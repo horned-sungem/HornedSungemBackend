@@ -121,10 +121,10 @@ def vote(request):
 @permission_classes([IsAuthenticated])
 def get_votes(request):
 
-    # TODO: expand module response and remove user attribute from response since it is redundant und unnecessary
-    
+    # TODO: maybe reduce information sent back since most is only needed after choosing a module
+
     user_votes = Vote.objects.filter(user=request.user)
-    return response.Response([VoteSerializer(vote).data for vote in user_votes])
+    return response.Response([(module_nr_map[vote.module], vote.score) for vote in user_votes])
 
 
 @api_view(['POST'])
