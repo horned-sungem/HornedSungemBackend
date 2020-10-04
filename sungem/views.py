@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated
 
 from sungem.models import Vote
-from sungem.recommender import recommend_modules, update_model
+from sungem.recommender import recommend_modules, similar_modules, update_model
 from sungem.serializers import VoteSerializer
 
 # Create your views here.
@@ -41,6 +41,13 @@ def get_module(request, name=''):
     Returns module as json.
     """
     return http.JsonResponse(module_nr_map[name.replace('_', '/')][0], safe=False)
+
+
+@api_view(['GET'])
+def get_similar(request, module=''):
+    if module not in module_nr_map:
+        return http.HttpResponseBadRequest('Incorrect module.')
+    return response.Response(similar_modules(5, module_nr_map[module][1]))
 
 
 @api_view(['POST'])
@@ -101,7 +108,7 @@ def vote(request):
         return http.HttpResponseBadRequest('Request needs to have score and module attribute.')
 
     if request.data['module'] not in module_nr_map:
-        return http.HttpResponseBadRequest('Invalid module id: '+request.data['module']+".")
+        return http.HttpResponseBadRequest('Invalid module id: ' + request.data['module'] + ".")
 
     if request.data['score'] != '0':
         Vote.objects.update_or_create(
@@ -120,7 +127,6 @@ def vote(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_votes(request):
-
     # TODO: maybe reduce information sent back since most is only needed after choosing a module
 
     user_votes = Vote.objects.filter(user=request.user)

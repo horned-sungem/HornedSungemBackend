@@ -27,17 +27,45 @@ model = None
 user_items = None
 user_to_id = None
 
+LINEAR_GROWTH_MAX = 2000
+SIMILARITY_RATIO = 1
+RECOMMENDATION_RATIO = 1
+
+
+def combine_similarities(list1, list2, list2_to_list1_ratio=1, linear_growth=False):
+    weight = {module[0]: module[1] for module in list1}
+
+    ratio = list2_to_list1_ratio * (min(1, Vote.objects.count() / 2000) if linear_growth else 1)
+
+    for module in list2:
+        if module[0] in weight:
+            weight[module[0]] += ratio * module[1]
+        else:
+            weight[module[0]] = ratio * module[1]
+
+    result = sorted(weight.items(), key=lambda x: x[1], reverse=True)
+
+    return result
+
 
 def content_similar_modules(n, module_id):
-    return sorted(range(len(module_data)), key=lambda i: similarity[module_id, i])[:n]
+    modules = [(i, similarity[module_id, i]) for i in range(len(module_data)) if similarity[module_id, i] > 0]
+
+    return sorted(modules, key=lambda x: x[1], reverse=True)[:n]
 
 
 def collaborative_similar_modules(n, module_id):
-    return model.similar_items(module_id)  # this is implicit. Changing to surprise for explicit data
+    # TODO: this is implicit. Should be changed to explicit for better results
+    return [module for module in model.similar_items(module_id) if module[1] > 0]
 
 
 def similar_modules(n, module_id):
-    return content_similar_modules(n, module_id=module_id)
+    content_result = content_similar_modules(n, module_id=module_id)
+    collaborative_result = collaborative_similar_modules(n, module_id=module_id)
+
+    return [module[0] for module in combine_similarities(content_result,
+                                                         collaborative_result,
+                                                         list2_to_list1_ratio=SIMILARITY_RATIO)]
 
 
 def content_recommend_modules(user, n=5, min_sim=0, return_similarity=False):
@@ -66,9 +94,12 @@ def collaborative_recommend_modules(user, n=5, min_sim=0, return_similarity=Fals
 def recommend_modules(user, n=5, min_sim=0):
     vote_count = Vote.objects.count()
 
-    content_results = content_recommend_modules(user, n=n, min_sim=min_sim)
-    collaborative_results = collaborative_recommend_modules(user, n=n, min_sim=min_sim)
-    return content_results  # TODO: Include collaborative
+    content_results = content_recommend_modules(user, n=n, min_sim=min_sim, return_similarity=True)
+    collaborative_results = collaborative_recommend_modules(user, n=n, min_sim=min_sim, return_similarity=True)
+
+    return [module[0] for module in combine_similarities(content_results,
+                                                         collaborative_results,
+                                                         list2_to_list1_ratio=RECOMMENDATION_RATIO)[:n]]
 
 
 def update_model():
