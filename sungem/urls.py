@@ -8,6 +8,7 @@ from . import views
 urlpatterns = [
     path('recommend/', views.get_recommended_modules),
     path('vote/', views.vote),
+    path('votes/', views.get_votes),
     path('modules/', views.get_modules),
     path('module/<str:name>/', views.get_module),
 

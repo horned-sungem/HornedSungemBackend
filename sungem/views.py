@@ -1,21 +1,16 @@
-from django.shortcuts import render
+import json
+
+import numpy as np
+from django import http
+from django.contrib.auth import models as authmodels
 from rest_framework import response
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-from rest_framework import status
 
-from django import http
-
-import json
-import numpy as np
-
-from rest_framework.authtoken import views as authviews
-from django.contrib.auth import models as authmodels
-
-from .models import Vote
-
-from .recommender import *
+from sungem.models import Vote
+from sungem.recommender import recommend_modules
+from sungem.serializers import VoteSerializer
 
 # Create your views here.
 
@@ -117,6 +112,14 @@ def vote(request):
         Vote.objects.filter(user=request.user).filter(module=request.data['module']).delete()
 
     return response.Response()
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_votes(request):
+    user_votes = Vote.objects.filter(user=request.user)
+    return response.Response([VoteSerializer(vote).data for vote in user_votes])
 
 
 @api_view(['POST'])

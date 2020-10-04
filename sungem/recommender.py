@@ -1,14 +1,12 @@
-from .models import Vote
-from django.contrib.auth.models import User
+import json
+import threading
 
 import implicit
 import numpy as np
-import json
-import threading
-import surprise
-import pandas as pd
-
+from django.contrib.auth.models import User
 from scipy.sparse import csr_matrix
+
+from sungem.models import Vote
 
 MAXIMUM_RECOMMENDED_MODULES = 5
 MINIMUM_ABSOLUTE_SIMILARITY = 0
@@ -37,6 +35,9 @@ def content_similar_modules(n, module_id):
 def collaborative_similar_modules(n, module_id):
     return model.similar_items(module_id)  # this is implicit. Changing to surprise for explicit data
 
+
+def similar_modules(n, module_id):
+    return content_similar_modules(n, module_id=module_id)
 
 
 def content_recommend_modules(user, n=5, min_sim=0, return_similarity=False):
