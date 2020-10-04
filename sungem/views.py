@@ -141,7 +141,7 @@ def get_votes(request):
     # TODO: maybe reduce information sent back since most is only needed after choosing a module
 
     user_votes = Vote.objects.filter(user=request.user)
-    return response.Response([(module_nr_map[vote.module], vote.score) for vote in user_votes])
+    return response.Response([(module_nr_map[vote.module][0], vote.score) for vote in user_votes])
 
 
 @api_view(['POST'])
