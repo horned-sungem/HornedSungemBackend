@@ -10,7 +10,6 @@ from rest_framework.permissions import IsAuthenticated
 
 from sungem.models import Vote
 from sungem.recommender import recommend_modules, similar_modules, update_model
-from sungem.serializers import VoteSerializer
 
 # Create your views here.
 
@@ -21,6 +20,7 @@ f.close()
 similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 
 # Create dict with subset of attributes for faster recommendation
+# TODO: Change this after better module file has been created. Maybe preprocess to better separate concerns.
 relevant_attr = ['Angebotsturnus', 'Kreditpunkte', 'Modul Nr.', 'Moduldauer', 'Modulname', 'Sprache']
 reduced_data = [dict(zip(relevant_attr, [d[att] for att in relevant_attr])) for d in module_data]
 
@@ -40,11 +40,16 @@ def get_module(request, name=''):
     """
     Returns module as json.
     """
+    if name not in module_nr_map:
+        return http.HttpResponseBadRequest('Incorrect module.')
     return http.JsonResponse(module_nr_map[name.replace('_', '/')][0], safe=False)
 
 
 @api_view(['GET'])
 def get_similar(request, module=''):
+    """
+    Returns similar modules to the given module.
+    """
     if module not in module_nr_map:
         return http.HttpResponseBadRequest('Incorrect module.')
     return response.Response(similar_modules(5, module_nr_map[module][1]))
@@ -91,6 +96,9 @@ def echo(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_recommended_modules(request):
+    """
+    Returns recommended modules using a hybrid recommender system.
+    """
     recommended_ids = recommend_modules(request.user)
 
     return response.Response([reduced_data[index] for index in recommended_ids])
@@ -101,7 +109,7 @@ def get_recommended_modules(request):
 @permission_classes([IsAuthenticated])
 def vote(request):
     """
-    "Requires logged-in user, "module" and "score" attribute
+    Requires logged-in user, "module" and "score" attribute
     """
 
     if 'score' not in request.data or 'module' not in request.data:
@@ -127,6 +135,9 @@ def vote(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_votes(request):
+    """
+    Get own votes.
+    """
     # TODO: maybe reduce information sent back since most is only needed after choosing a module
 
     user_votes = Vote.objects.filter(user=request.user)
@@ -135,5 +146,9 @@ def get_votes(request):
 
 @api_view(['POST'])
 def update(request):
+    """
+    Api endpoint to force model recomputation in recommender engine. Currently not needed since model is recomputed
+    after every vote.
+    """
     update_model()
     return response.Response()

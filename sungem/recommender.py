@@ -33,6 +33,15 @@ RECOMMENDATION_RATIO = 1
 
 
 def combine_similarities(list1, list2, list2_to_list1_ratio=1, linear_growth=False):
+    """
+    Combines the two inputted lists and sorts them by their cumulative similarity.
+
+    :param list1: first list of tuples (module, similarity)
+    :param list2: second list of tuples (module, similarity). linear_growth is applied here
+    :param list2_to_list1_ratio: ratio of list2 weight to list1 weight after growth period
+    :param linear_growth: set to true if certainty doesn't scale by itself in list2
+    :return: list of tuples (module, similarity)
+    """
     weight = {module[0]: module[1] for module in list1}
 
     ratio = list2_to_list1_ratio * (min(1, Vote.objects.count() / 2000) if linear_growth else 1)
@@ -49,17 +58,26 @@ def combine_similarities(list1, list2, list2_to_list1_ratio=1, linear_growth=Fal
 
 
 def content_similar_modules(n, module_id):
+    """
+    :return: n modules similar to module_id based on their content similarity
+    """
     modules = [(i, similarity[module_id, i]) for i in range(len(module_data)) if similarity[module_id, i] > 0]
 
     return sorted(modules, key=lambda x: x[1], reverse=True)[:n]
 
 
 def collaborative_similar_modules(n, module_id):
+    """
+    :return: n modules similar to module_id based on their collaborative similarity
+    """
     # TODO: this is implicit. Should be changed to explicit for better results
     return [module for module in model.similar_items(module_id) if module[1] > 0]
 
 
 def similar_modules(n, module_id):
+    """
+    :return: n modules similar to module_id based on their hybrid similarity
+    """
     content_result = content_similar_modules(n, module_id=module_id)
     collaborative_result = collaborative_similar_modules(n, module_id=module_id)
 
@@ -69,6 +87,11 @@ def similar_modules(n, module_id):
 
 
 def content_recommend_modules(user, n=5, min_sim=0, return_similarity=False):
+    """
+    :param min_sim: minimum absolute similarity to be included in result
+    :param return_similarity: boolean flag whether result should include similarity
+    :return: n modules recommended to user based on their content similarity
+    """
     votes = {module_nr_map[vote.module][1]: vote.score for vote in Vote.objects.filter(user=user)}
 
     module_similarity = [(e, sum(similarity[e, module] * score for module, score in votes.items())) for e in
@@ -85,13 +108,21 @@ def content_recommend_modules(user, n=5, min_sim=0, return_similarity=False):
 
 
 def collaborative_recommend_modules(user, n=5, min_sim=0, return_similarity=False):
-    print(model.recommend(user_to_id[user], user_items))
+    """
+    :param min_sim: minimum absolute similarity to be included in result
+    :param return_similarity: boolean flag whether result should include similarity
+    :return: n modules recommended to user based on their collaborative similarity
+    """
     if return_similarity:
         return model.recommend(user_to_id[user], user_items)[:n]
     return [m[0] for m in model.recommend(user_to_id[user], user_items)[:n]]
 
 
 def recommend_modules(user, n=5, min_sim=0):
+    """
+    :param min_sim: minimum absolute similarity to be included in result
+    :return: n modules recommended to user based on their hybrid similarity
+    """
     vote_count = Vote.objects.count()
 
     content_results = content_recommend_modules(user, n=n, min_sim=min_sim, return_similarity=True)
@@ -103,13 +134,19 @@ def recommend_modules(user, n=5, min_sim=0):
 
 
 def update_model():
+    """
+    Updates the internal model used to calculate collaborative recommendations and similarities.
+    """
     # task = asyncio.create_task(async_update_model())
     thread = threading.Thread(target=async_update_model)
     thread.start()
 
 
 def async_update_model():
-    print('Updating....')
+    """
+    Helper method for updating the model asynchronously. Never should be called since it causes backend downtime.
+    Call update_model() to run this in a separate thread.
+    """
 
     global model, user_items, user_to_id
 
@@ -122,7 +159,7 @@ def async_update_model():
     item_user = csr_matrix((modules_count, users_count))
 
     for vote in Vote.objects.all():
-        print(module_nr_map[vote.module][1], user_to_id[vote.user], vote.score)
+        # print(module_nr_map[vote.module][1], user_to_id[vote.user], vote.score)
         item_user[module_nr_map[vote.module][1], user_to_id[vote.user]] = vote.score
 
     model = implicit.als.AlternatingLeastSquares()
@@ -132,4 +169,4 @@ def async_update_model():
     user_items = item_user.T.tocsr()
 
 
-async_update_model()
+async_update_model()  # initializes model synchronously to postpone requests until after model has been generated.

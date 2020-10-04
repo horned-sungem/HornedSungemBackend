@@ -10,6 +10,7 @@ module_data = json.load(f)
 f.close()
 module_nr_map = {module['Modul Nr.']: (module, index) for index, module in enumerate(module_data)}
 
+
 # Create your models here.
 
 class Module(models.Model):
@@ -17,6 +18,8 @@ class Module(models.Model):
     Model for a single module. Maybe most information can be removed later since the data and similarity can be
     preprocessed without knowledge of Module attributes.
     """
+
+    # TODO: Change model or remove entirely since it won't be used
 
     name = models.CharField(max_length=100)
     nr = models.CharField(max_length=20)
@@ -38,7 +41,6 @@ class Vote(models.Model):
     which may be changed in favor of a continuous float value.
     """
     user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
-    # module = models.ForeignKey(Module, on_delete=models.CASCADE)
     module = models.CharField(max_length=20)
     score = models.SmallIntegerField()
 
