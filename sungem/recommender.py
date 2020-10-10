@@ -14,14 +14,14 @@ MINIMUM_ABSOLUTE_SIMILARITY = 0
 # Create your views here.
 
 # TODO: Adjust for new module_data
-f = open('sungem/output.json')
+f = open('sungem/modules.json')
 module_data = json.load(f)
 f.close()
 similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 
 # Create dict with subset of attributes for faster recommendation
 
-module_nr_map = {module['Modul Nr.']: (module, index) for index, module in enumerate(module_data)}
+module_nr_map = {module['id']: (module, index) for index, module in enumerate(module_data)}
 
 model = None
 user_items = None
@@ -81,6 +81,7 @@ def similar_modules(n, module_id):
     content_result = content_similar_modules(n, module_id=module_id)
     collaborative_result = collaborative_similar_modules(n, module_id=module_id)
 
+    # TODO: return modules instead of id's
     return [module[0] for module in combine_similarities(content_result,
                                                          collaborative_result,
                                                          list2_to_list1_ratio=SIMILARITY_RATIO)]

@@ -13,18 +13,17 @@ from sungem.recommender import recommend_modules, similar_modules, update_model
 
 # Create your views here.
 
-# TODO: Adjust for new module_data
-f = open('sungem/output.json')
+f = open('sungem/modules.json')
 module_data = json.load(f)
 f.close()
 similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 
 # Create dict with subset of attributes for faster recommendation
 # TODO: Change this after better module file has been created. Maybe preprocess to better separate concerns.
-relevant_attr = ['Angebotsturnus', 'Kreditpunkte', 'Modul Nr.', 'Moduldauer', 'Modulname', 'Sprache']
+relevant_attr = ['name', 'id', 'cp', 'duration', 'self_study', 'cycle', 'language']
 reduced_data = [dict(zip(relevant_attr, [d[att] for att in relevant_attr])) for d in module_data]
 
-module_nr_map = {module['Modul Nr.']: (module, index) for index, module in enumerate(module_data)}
+module_nr_map = {module['id']: (module, index) for index, module in enumerate(module_data)}
 
 
 @api_view(['GET'])
