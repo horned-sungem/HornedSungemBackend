@@ -39,9 +39,10 @@ def get_module(request, name=''):
     """
     Returns module as json.
     """
-    if name not in module_nr_map:
+    safe_name = name.replace('_', '/')
+    if safe_name not in module_nr_map:
         return http.HttpResponseBadRequest('Incorrect module.')
-    return http.JsonResponse(module_nr_map[name.replace('_', '/')][0], safe=False)
+    return http.JsonResponse(module_nr_map[safe_name][0], safe=False)
 
 
 @api_view(['GET'])
