@@ -1,0 +1,12 @@
+version: "3.9"
+
+services: 
+
+    web:
+        container_name: sungem-django
+        build: .
+        command: "/bin/bash docker-entrypoint.sh"
+        volumes: 
+          - .:/code
+        ports: 
+          - "8000:8000"
