@@ -50,9 +50,10 @@ def get_similar(request, module=''):
     """
     Returns similar modules to the given module.
     """
-    if module not in module_nr_map:
+    safe_name = module.replace('_', '/')
+    if safe_name not in module_nr_map:
         return http.HttpResponseBadRequest('Incorrect module.')
-    return response.Response(similar_modules(5, module_nr_map[module][1]))
+    return response.Response(similar_modules(5, module_nr_map[safe_name][1]))
 
 
 @api_view(['POST'])
