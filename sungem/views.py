@@ -100,7 +100,7 @@ def get_recommended_modules(request):
     """
     Returns recommended modules using a hybrid recommender system.
     """
-    recommended_ids = recommend_modules(request.user)
+    recommended_ids = recommend_modules(request.user, n=10)
 
     return response.Response([reduced_data[index] for index in recommended_ids])
 
@@ -116,18 +116,18 @@ def vote(request):
     if 'score' not in request.data or 'module' not in request.data:
         return http.HttpResponseBadRequest('Request needs to have score and module attribute.')
 
-    if request.data['module'] not in module_nr_map:
-        return http.HttpResponseBadRequest('Invalid module id: ' + request.data['module'] + ".")
+    if request.data['module'].replace('_', '/') not in module_nr_map:
+        return http.HttpResponseBadRequest('Invalid module id: ' + request.data['module'].replace('_', '/') + ".")
 
-    if request.data['score'] != '0':
+    if request.data['score'] != 0:
         Vote.objects.update_or_create(
-            user=request.user, module=request.data['module'],
+            user=request.user, module=request.data['module'].replace('_', '/'),
             defaults={'score': request.data['score']}
         )
     else:
-        Vote.objects.filter(user=request.user).filter(module=request.data['module']).delete()
+        Vote.objects.filter(user=request.user).filter(module=request.data['module'].replace('_', '/')).delete()
 
-    update_model()  # TODO: consider removing this in favor of a more static and less computationally expensive approach
+    #update_model()  # TODO: consider removing this in favor of a more static and less computationally expensive approach
 
     return response.Response()
 
