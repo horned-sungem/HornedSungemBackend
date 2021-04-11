@@ -151,23 +151,26 @@ def async_update_model():
 
     global model, user_items, user_to_id
 
-    users = User.objects.all()
-    user_to_id = {user: index for index, user in enumerate(users)}
+    try:
+        users = User.objects.all()
+        user_to_id = {user: index for index, user in enumerate(users)}
 
-    modules_count = len(module_data)
-    users_count = users.count()
+        modules_count = len(module_data)
+        users_count = users.count()
 
-    item_user = csr_matrix((modules_count, users_count))
+        item_user = csr_matrix((modules_count, users_count))
 
-    for vote in Vote.objects.all():
-        # print(module_nr_map[vote.module][1], user_to_id[vote.user], vote.score)
-        item_user[module_nr_map[vote.module][1], user_to_id[vote.user]] = vote.score
+        for vote in Vote.objects.all():
+            # print(module_nr_map[vote.module][1], user_to_id[vote.user], vote.score)
+            item_user[module_nr_map[vote.module][1], user_to_id[vote.user]] = vote.score
 
-    model = implicit.als.AlternatingLeastSquares()
+        model = implicit.als.AlternatingLeastSquares()
 
-    model.fit(item_user, show_progress=False)
+        model.fit(item_user, show_progress=False)
 
-    user_items = item_user.T.tocsr()
+        user_items = item_user.T.tocsr()
+    except:
+        print('(ERROR) Failed generating similarity. May be ignored if database is being set up. (fix in future @lenny)')
 
 
 async_update_model()  # initializes model synchronously to postpone requests until after model has been generated.
