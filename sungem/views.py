@@ -7,6 +7,7 @@ from rest_framework import response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
 
 from sungem.models import Vote
 from sungem.recommender import recommend_modules, similar_modules, update_model
@@ -68,8 +69,9 @@ def register_user(request):
     users = authmodels.User.objects.filter(username=data['username'])
     if users:
         return http.HttpResponseBadRequest('Username already exists')
-    authmodels.User.objects.create_user(data['username'], password=data['password'])
-    return response.Response()
+    user = authmodels.User.objects.create_user(data['username'], password=data['password'])
+    token, created = Token.objects.get_or_create(user=user)
+    return http.JsonResponse({'token': token.key})
 
 
 @api_view(['POST'])
@@ -129,7 +131,9 @@ def vote(request):
 
     #update_model()  # TODO: consider removing this in favor of a more static and less computationally expensive approach
 
-    return response.Response()
+    #return response.Response()
+    return http.JsonResponse(module_nr_map[request.data['module'].replace('_', '/')][0], safe=False)
+    #return get_module(request, request.data['module'])
 
 
 @api_view(['GET'])
