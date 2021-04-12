@@ -32,7 +32,7 @@ def get_modules(request):
     """
     Returns compressed modules as json.
     """
-    return http.JsonResponse(reduced_data, safe=False)
+    return http.JsonResponse(module_data, safe=False)
 
 
 @api_view(['GET'])
