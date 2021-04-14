@@ -21,10 +21,10 @@ similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 
 # Create dict with subset of attributes for faster recommendation
 # TODO: Change this after better module file has been created. Maybe preprocess to better separate concerns.
-relevant_attr = ['name', 'id', 'cp', 'duration', 'self_study', 'cycle', 'language']
+relevant_attr = ['name', 'nr', 'cp', 'duration', 'self_study', 'cycle', 'language']
 reduced_data = [dict(zip(relevant_attr, [d[att] for att in relevant_attr])) for d in module_data]
 
-module_nr_map = {module['id']: (module, index) for index, module in enumerate(module_data)}
+module_nr_map = {module['nr']: (module, index) for index, module in enumerate(module_data)}
 
 
 @api_view(['GET'])

@@ -27,7 +27,7 @@ class Module(models.Model):
     workload = models.SmallIntegerField()
     self_study = models.SmallIntegerField()
     duration = models.SmallIntegerField()
-    turnus = models.TextField()
+    cycle = models.TextField()
     language = models.TextField()
     responsible = models.TextField()
     learning_content = models.TextField()

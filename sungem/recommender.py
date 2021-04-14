@@ -21,7 +21,7 @@ similarity = np.genfromtxt('sungem/similarity.csv', delimiter=',')
 
 # Create dict with subset of attributes for faster recommendation
 
-module_nr_map = {module['id']: (module, index) for index, module in enumerate(module_data)}
+module_nr_map = {module['nr']: (module, index) for index, module in enumerate(module_data)}
 
 model = None
 user_items = None
