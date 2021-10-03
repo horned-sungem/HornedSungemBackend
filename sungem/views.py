@@ -121,7 +121,7 @@ def vote(request):
     if request.data['module'].replace('_', '/') not in module_nr_map:
         return http.HttpResponseBadRequest('Invalid module id: ' + request.data['module'].replace('_', '/') + ".")
 
-    if request.data['score'] != 0:
+    if int(request.data['score']) != 0:
         Vote.objects.update_or_create(
             user=request.user, module=request.data['module'].replace('_', '/'),
             defaults={'score': request.data['score']}
